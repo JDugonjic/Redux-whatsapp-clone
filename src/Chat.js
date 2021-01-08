@@ -1,12 +1,13 @@
 import { Avatar, IconButton } from "@material-ui/core";
 import SearchOutlinedIcon from "@material-ui/icons/SearchOutlined";
 import AttachFileOutlinedIcon from "@material-ui/icons/AttachFileOutlined";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
 import MicIcon from "@material-ui/icons/Mic";
 import db from "./firebase";
+import firebase from "firebase";
 import ChatMessage from "./ChatMessage";
 import { useParams } from "react-router-dom";
 import { selectUser } from "./features/userSlice";
@@ -22,7 +23,15 @@ function Chat() {
   const [showPicker, setShowPicker] = useState(false);
   const [chosenEmoji, setChosenEmoji] = useState(null);
 
-  
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const scrollToBottom = () => {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    };
+
+    scrollToBottom();
+  }, [messages]);
 
   const onEmojiClick = (event, emojiObject) => {
     setChosenEmoji(emojiObject);
@@ -53,14 +62,11 @@ function Chat() {
   const sendMessage = (e) => {
     e.preventDefault();
 
-    db.collection("rooms")
-      .doc(roomId)
-      .collection("messages")
-      .add({
-        name: user.displayName,
-        message: input,
-        timestamp: `${new Date().toLocaleTimeString()}`,
-      });
+    db.collection("rooms").doc(roomId).collection("messages").add({
+      name: user.displayName,
+      message: input,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
 
     setInput("");
   };
@@ -71,7 +77,12 @@ function Chat() {
         <Avatar>{messages[messages.length - 1]?.data.name[0]}</Avatar>
         <div className="chat__headerInfo">
           <h3>{roomName}</h3>
-          <p>last seen at {messages[messages.length - 1]?.data.timestamp}</p>
+          <p>
+            last seen at{" "}
+            {new Date(
+              messages[messages.length - 1]?.data.timestamp?.toDate()
+            ).toLocaleTimeString()}
+          </p>
         </div>
         <div className="chat__headerRight">
           <IconButton>
@@ -91,9 +102,10 @@ function Chat() {
             key={id}
             name={name}
             message={message}
-            timestamp={timestamp}
+            timestamp={new Date(timestamp?.seconds * 1000).toLocaleTimeString()}
           />
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <div className="chat__footer">
         {showPicker && <Picker onEmojiClick={onEmojiClick} />}
