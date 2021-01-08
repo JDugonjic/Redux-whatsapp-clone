@@ -1,23 +1,34 @@
 import { Avatar } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import db from "./firebase";
 import "./SidebarChat.css";
 
-function SidebarChat({ addNewChat, id, name, input }) {
+function SidebarChat({ addNewChat, id, name, input, setInput, rooms }) {
   const [messages, setMessages] = useState("");
+  const history = useHistory();
 
   const createChat = (e) => {
     e.preventDefault();
 
-    const roomName = input;
+    if (input) {
+      const filteredRoom = rooms.filter((room) =>
+        room.data.name.toLowerCase().includes(input.toLowerCase())
+      );
 
-    if (roomName) {
-      db.collection("rooms").add({
-        name: roomName,
-      });
+      if (filteredRoom[0]?.data.name === input) {
+        history.push(`/rooms/${filteredRoom[0].id}`);
+      } else {
+        const roomName = input;
+
+        if (roomName) {
+          db.collection("rooms").add({
+            name: roomName,
+          });
+        }
+      }
     }
-    
+    setInput("");
   };
 
   useEffect(() => {
