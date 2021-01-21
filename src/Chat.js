@@ -13,6 +13,7 @@ import { useParams } from "react-router-dom";
 import { selectUser } from "./features/userSlice";
 import { useSelector } from "react-redux";
 import Picker from "emoji-picker-react";
+import ReactTimeago from "react-timeago";
 
 function Chat() {
   const [input, setInput] = useState("");
@@ -78,10 +79,12 @@ function Chat() {
         <div className="chat__headerInfo">
           <h3>{roomName}</h3>
           <p>
-            last seen at{" "}
-            {new Date(
-              messages[messages.length - 1]?.data.timestamp?.toDate()
-            ).toLocaleTimeString()}
+            last seen{" "}
+            <ReactTimeago
+              date={new Date(
+                messages[messages.length - 1]?.data.timestamp?.toDate()
+              ).toUTCString()}
+            />
           </p>
         </div>
         <div className="chat__headerRight">
